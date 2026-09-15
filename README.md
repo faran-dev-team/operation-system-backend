@@ -34,6 +34,10 @@ npm run test:e2e
 npm run prisma:generate
 ```
 
+## API contract
+
+Frontend-facing error shape, `x-request-id`, and the frozen route list for this slice live in [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md). Keep that document stable mid-slice.
+
 ## Next
 
-Run the first Prisma migrate when `DIRECT_URL` is available. Then wire Auth, Storage, and Inngest functions.
+Wire Storage and Inngest functions after the content slice is live on the frontend.

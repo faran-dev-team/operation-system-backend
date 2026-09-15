@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { AdsModule } from './ads/ads.module';
+import { BrandBriefModule } from './brand-brief/brand-brief.module';
 import { ContentModule } from './content/content.module';
 import { validateEnv } from './config/env';
 import { EmailModule } from './email/email.module';
@@ -31,6 +32,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     HealthModule,
     IdentityModule,
     WorkspacesModule,
+    BrandBriefModule,
     ContentModule,
     MediaModule,
     SocialModule,
