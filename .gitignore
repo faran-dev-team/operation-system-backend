@@ -4,8 +4,6 @@
 /coverage
 
 # env
-.env
-.env.local
 .env.*.local
 !.env.example
 
@@ -17,8 +15,8 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 .idea
-.vscode/*
 !.vscode/extensions.json
 
 # prisma
 /src/generated/prisma
+config.bat
