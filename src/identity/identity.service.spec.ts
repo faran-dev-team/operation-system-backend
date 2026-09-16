@@ -101,6 +101,32 @@ describe('IdentityService', () => {
     );
   });
 
+  it('re-binds a stale supabaseAuthId when the email matches', async () => {
+    supabase.getUserFromAccessToken.mockResolvedValue({
+      id: 'sb-real',
+      email: user.email,
+    });
+    prisma.db.user.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ ...user, supabaseAuthId: 'sb-auth-alpha' });
+    prisma.db.user.update.mockResolvedValue({
+      ...user,
+      supabaseAuthId: 'sb-real',
+    });
+    prisma.db.membership.findMany.mockResolvedValue([membership]);
+
+    await expect(service.authenticate('valid-token')).resolves.toMatchObject({
+      user: {
+        email: user.email,
+        supabaseAuthId: 'sb-real',
+      },
+    });
+    expect(prisma.db.user.update).toHaveBeenCalledWith({
+      where: { id: user.id },
+      data: { supabaseAuthId: 'sb-real' },
+    });
+  });
+
   it('rejects a user with no workspace membership', async () => {
     supabase.getUserFromAccessToken.mockResolvedValue({
       id: 'sb-1',
