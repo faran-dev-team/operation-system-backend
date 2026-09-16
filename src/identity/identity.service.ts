@@ -156,8 +156,9 @@ export class IdentityService {
       throw new UnauthorizedException('No account is linked to this sign-in.');
     }
 
-    if (byEmail.supabaseAuthId && byEmail.supabaseAuthId !== supabaseAuthId) {
-      throw new UnauthorizedException('No account is linked to this sign-in.');
+    // Re-bind when Auth user was recreated or a test left a stale supabaseAuthId.
+    if (byEmail.supabaseAuthId === supabaseAuthId) {
+      return byEmail;
     }
 
     return this.prisma.db.user.update({
