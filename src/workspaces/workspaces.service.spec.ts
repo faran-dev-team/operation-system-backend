@@ -16,7 +16,14 @@ describe('WorkspacesService', () => {
     },
   };
 
-  const service = new WorkspacesService(prisma as unknown as PrismaService);
+  const audit = {
+    record: jest.fn().mockResolvedValue(null),
+  };
+
+  const service = new WorkspacesService(
+    prisma as unknown as PrismaService,
+    audit as never,
+  );
 
   const workspaceAlpha = {
     id: 'ws-alpha',

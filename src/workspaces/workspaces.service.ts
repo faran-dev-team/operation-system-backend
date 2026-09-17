@@ -1,10 +1,14 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class WorkspacesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async listWorkspaces(userId: string, currentWorkspaceId?: string) {
     const memberships = await this.prisma.db.membership.findMany({
@@ -40,6 +44,18 @@ export class WorkspacesService {
     await this.prisma.db.user.update({
       where: { id: userId },
       data: { currentWorkspaceId: workspaceId },
+    });
+
+    await this.audit.record({
+      workspaceId,
+      actorId: userId,
+      action: 'workspace.switched',
+      resource: 'workspace',
+      resourceId: workspaceId,
+      payload: {
+        slug: membership.workspace.slug,
+        role: membership.role,
+      },
     });
 
     return {

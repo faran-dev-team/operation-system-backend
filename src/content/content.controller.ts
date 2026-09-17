@@ -6,19 +6,24 @@ import {
   HttpCode,
   Param,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthContext } from '../identity/auth-context';
 import { CurrentAuth } from '../identity/current-auth.decorator';
 import { ContentService } from './content.service';
 import { CreateContentRequestDto } from './dto/create-content-request.dto';
 
 @Controller('content')
+@UseGuards(RolesGuard)
 export class ContentController {
   constructor(private readonly contentService: ContentService) {}
 
   @Post('requests')
   @HttpCode(200)
+  @Roles('operator')
   submit(
     @CurrentAuth() auth: AuthContext,
     @Body() body: CreateContentRequestDto,
