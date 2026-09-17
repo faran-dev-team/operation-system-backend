@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 import type { Env } from './config/env';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 
 export function configureApp(app: INestApplication) {
   const config = app.get(ConfigService<Env, true>);
@@ -24,4 +25,12 @@ export function configureApp(app: INestApplication) {
     }),
   );
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  // Inside configureApp(app: INestApplication):
+  const SwaggerConfig = new DocumentBuilder().setTitle('Operation System API').setDescription('operation system apis').setVersion('1.0').addBearerAuth().build();
+
+  const document = SwaggerModule.createDocument(app, SwaggerConfig);
+  SwaggerModule.setup('docs', app, document);
+
+
 }
