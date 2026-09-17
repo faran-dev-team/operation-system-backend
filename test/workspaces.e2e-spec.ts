@@ -58,7 +58,19 @@ describe('Workspaces (e2e)', () => {
       throw new Error('Seed data is missing. Run npm run prisma:seed.');
     }
 
-    alphaUser = { id: user.id, currentWorkspaceId: user.currentWorkspaceId };
+    // Ensure clean state: delete any stale beta membership from previous interrupted test runs
+    await prisma.db.membership.deleteMany({
+      where: {
+        userId: user.id,
+        workspaceId: beta.id,
+      },
+    });
+    await prisma.db.user.update({
+      where: { id: user.id },
+      data: { currentWorkspaceId: alpha.id },
+    });
+
+    alphaUser = { id: user.id, currentWorkspaceId: alpha.id };
     alphaWorkspace = { id: alpha.id, slug: alpha.slug };
     betaWorkspace = { id: beta.id, slug: beta.slug };
   });

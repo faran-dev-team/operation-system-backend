@@ -14,6 +14,9 @@ const REVIEWER_TOKEN = 'test-beta-reviewer-token';
 const ALPHA_EMAIL = 'operator.alpha.security@pilot.local';
 const REVIEWER_EMAIL = 'reviewer.beta.security@pilot.local';
 
+const uniqueAlphaAuthId = `sb-auth-alpha-sec-${Date.now()}`;
+const uniqueReviewerAuthId = `sb-auth-reviewer-sec-${Date.now()}`;
+
 describe('Cross-Workspace Security & RBAC (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
@@ -34,13 +37,13 @@ describe('Cross-Workspace Security & RBAC (e2e)', () => {
         getUserFromAccessToken: (token: string) => {
           if (token === ALPHA_TOKEN) {
             return Promise.resolve({
-              id: 'sb-auth-alpha-operator',
+              id: uniqueAlphaAuthId,
               email: ALPHA_EMAIL,
             });
           }
           if (token === REVIEWER_TOKEN) {
             return Promise.resolve({
-              id: 'sb-auth-beta-reviewer',
+              id: uniqueReviewerAuthId,
               email: REVIEWER_EMAIL,
             });
           }
@@ -74,10 +77,12 @@ describe('Cross-Workspace Security & RBAC (e2e)', () => {
       where: { email: ALPHA_EMAIL },
       create: {
         email: ALPHA_EMAIL,
+        supabaseAuthId: uniqueAlphaAuthId,
         name: 'Alpha Security Operator',
         currentWorkspaceId: alphaWorkspaceId,
       },
       update: {
+        supabaseAuthId: uniqueAlphaAuthId,
         currentWorkspaceId: alphaWorkspaceId,
       },
     });
@@ -105,10 +110,12 @@ describe('Cross-Workspace Security & RBAC (e2e)', () => {
       where: { email: REVIEWER_EMAIL },
       create: {
         email: REVIEWER_EMAIL,
+        supabaseAuthId: uniqueReviewerAuthId,
         name: 'Beta Security Reviewer',
         currentWorkspaceId: betaWorkspaceId,
       },
       update: {
+        supabaseAuthId: uniqueReviewerAuthId,
         currentWorkspaceId: betaWorkspaceId,
       },
     });
