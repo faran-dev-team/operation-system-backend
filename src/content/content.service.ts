@@ -12,6 +12,7 @@ import { requireWorkspaceRecord, workspaceWhere } from '../common/tenant';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateContentRequestDto } from './dto/create-content-request.dto';
+import type { UpdateContentDraftDto } from './dto/update-content-draft.dto';
 import {
   CONTENT_GENERATION_EXECUTOR,
   type ContentGenerationExecutor,
@@ -142,6 +143,73 @@ export class ContentService {
       orderBy: { createdAt: 'desc' },
     });
     return drafts.map((draft) => this.serializeDraft(draft));
+  }
+
+  /**
+   * Optimistic-concurrency update: the WHERE clause pins both the tenant and
+   * the expected version in a single UPDATE, so Postgres serializes
+   * concurrent writers on the row lock and only one can ever match. A
+   * mismatch (count === 0) is resolved into 404 vs 409 by re-checking
+   * existence within the same workspace, without a second write.
+   */
+  async updateDraftContent(
+    workspaceId: string,
+    userId: string,
+    draftId: string,
+    dto: UpdateContentDraftDto,
+  ) {
+    const content = dto.content.trim();
+    if (!content) {
+      throw new BadRequestException('content must not be empty.');
+    }
+
+    const updateResult = await this.prisma.db.contentDraft.updateMany({
+      where: {
+        id: draftId,
+        workspaceId,
+        version: dto.expectedVersion,
+      },
+      data: {
+        body: content,
+        version: { increment: 1 },
+      },
+    });
+
+    if (updateResult.count === 0) {
+      const existing = await this.prisma.db.contentDraft.findFirst({
+        where: { id: draftId, workspaceId },
+        select: { version: true },
+      });
+
+      if (!existing) {
+        throw new NotFoundException('Record was not found in this workspace.');
+      }
+
+      throw new ConflictException(
+        `Draft version is stale. Expected version ${dto.expectedVersion}, current version is ${existing.version}.`,
+      );
+    }
+
+    const updated = requireWorkspaceRecord(
+      await this.prisma.db.contentDraft.findFirst({
+        where: { id: draftId, ...workspaceWhere(workspaceId) },
+      }),
+      workspaceId,
+    );
+
+    await this.audit.record({
+      workspaceId,
+      actorId: userId,
+      action: 'content_draft.updated',
+      resource: 'content_draft',
+      resourceId: draftId,
+      payload: {
+        previousVersion: dto.expectedVersion,
+        newVersion: updated.version,
+      },
+    });
+
+    return this.serializeDraft(updated);
   }
 
   private resolveIdempotencyKey(
