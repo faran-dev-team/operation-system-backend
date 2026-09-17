@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { AdsModule } from './ads/ads.module';
+import { AuditModule } from './audit/audit.module';
 import { BrandBriefModule } from './brand-brief/brand-brief.module';
 import { ContentModule } from './content/content.module';
 import { validateEnv } from './config/env';
@@ -26,6 +27,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
       validate: validateEnv,
     }),
     PrismaModule,
+    AuditModule,
     SupabaseModule,
     ProvidersModule,
     InngestModule,

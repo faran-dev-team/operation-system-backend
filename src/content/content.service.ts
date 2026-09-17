@@ -9,6 +9,7 @@ import { ContentJobStatus, Prisma } from '@prisma/client';
 import { createHash, randomUUID } from 'node:crypto';
 
 import { requireWorkspaceRecord, workspaceWhere } from '../common/tenant';
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateContentRequestDto } from './dto/create-content-request.dto';
 import {
@@ -35,6 +36,7 @@ export class ContentService {
     private readonly provider: TextGenerationProvider,
     @Inject(CONTENT_GENERATION_EXECUTOR)
     private readonly executor: ContentGenerationExecutor,
+    private readonly audit: AuditService,
   ) {}
 
   async submit(
@@ -74,6 +76,19 @@ export class ContentService {
       idempotencyKey,
       input,
       brandBriefId: brand?.id ?? null,
+    });
+
+    await this.audit.record({
+      workspaceId,
+      actorId: userId,
+      action: 'content_request.submitted',
+      resource: 'content_request',
+      resourceId: request.id,
+      payload: {
+        topic: input.topic,
+        audience: input.audience,
+        format: input.format,
+      },
     });
 
     await this.executor.execute({

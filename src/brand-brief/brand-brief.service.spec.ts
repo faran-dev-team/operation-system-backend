@@ -13,7 +13,14 @@ describe('BrandBriefService', () => {
     },
   };
 
-  const service = new BrandBriefService(prisma as unknown as PrismaService);
+  const audit = {
+    record: jest.fn().mockResolvedValue(null),
+  };
+
+  const service = new BrandBriefService(
+    prisma as unknown as PrismaService,
+    audit as never,
+  );
 
   const brief = {
     id: 'brief-1',

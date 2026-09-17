@@ -132,8 +132,14 @@ describe('ContentService', () => {
       draftId,
     });
     const executor: ContentGenerationExecutor = { execute };
+    const audit = { record: jest.fn().mockResolvedValue(null) };
 
-    const service = new ContentService(prisma as never, provider, executor);
+    const service = new ContentService(
+      prisma as never,
+      provider,
+      executor,
+      audit as never,
+    );
 
     return { service, prisma, execute, generationJobFindFirst };
   }

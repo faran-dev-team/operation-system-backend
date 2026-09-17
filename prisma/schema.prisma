@@ -53,6 +53,7 @@ model Workspace {
   contentDrafts       ContentDraft[]
   generationJobs      GenerationJob[]
   providerConnections ProviderConnection[]
+  auditLogs           AuditLog[]
 
   @@map("workspaces")
 }
@@ -68,6 +69,7 @@ model User {
 
   memberships     Membership[]
   contentRequests ContentRequest[]
+  auditLogs       AuditLog[]
 
   @@map("users")
 }
@@ -218,3 +220,23 @@ model ProviderCredential {
 
   @@map("provider_credentials")
 }
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  workspaceId String   @map("workspace_id")
+  actorId     String   @map("actor_id")
+  action      String
+  resource    String
+  resourceId  String?  @map("resource_id")
+  payload     Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor     User      @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([actorId])
+  @@index([action])
+  @@map("audit_logs")
+}
+

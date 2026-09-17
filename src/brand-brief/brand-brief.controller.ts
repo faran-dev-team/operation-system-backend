@@ -1,11 +1,14 @@
-import { Body, Controller, Get, HttpCode, Put } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Put, UseGuards } from '@nestjs/common';
 
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthContext } from '../identity/auth-context';
 import { CurrentAuth } from '../identity/current-auth.decorator';
 import { BrandBriefService } from './brand-brief.service';
 import { UpsertBrandBriefDto } from './dto/upsert-brand-brief.dto';
 
 @Controller('brand-brief')
+@UseGuards(RolesGuard)
 export class BrandBriefController {
   constructor(private readonly brandBriefService: BrandBriefService) {}
 
@@ -16,7 +19,13 @@ export class BrandBriefController {
 
   @Put()
   @HttpCode(200)
+  @Roles('operator')
   upsert(@CurrentAuth() auth: AuthContext, @Body() body: UpsertBrandBriefDto) {
-    return this.brandBriefService.upsert(auth.workspace.id, body);
+    return this.brandBriefService.upsert(
+      auth.workspace.id,
+      body,
+      auth.user.id,
+    );
   }
 }
+
