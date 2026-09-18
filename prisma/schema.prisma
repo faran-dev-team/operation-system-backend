@@ -146,12 +146,23 @@ model GenerationJob {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
+  leaseExpiresAt   DateTime?        @map("lease_expires_at")
+  leaseWorkerId    String?          @map("lease_worker_id")
+  retryCount       Int              @default(0) @map("retry_count")
+  maxRetries       Int              @default(3) @map("max_retries")
+  nextRetryAt      DateTime?        @map("next_retry_at")
+  operationId      String?          @map("operation_id")
+  deadLetteredAt   DateTime?        @map("dead_lettered_at")
+  deadLetterReason String?          @map("dead_letter_reason") @db.Text
+
   workspace      Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   contentRequest ContentRequest @relation(fields: [contentRequestId], references: [id], onDelete: Cascade)
   draft          ContentDraft?
 
   @@index([workspaceId])
   @@index([status])
+  @@index([status, leaseExpiresAt, nextRetryAt])
+  @@index([operationId])
   @@map("generation_jobs")
 }
 

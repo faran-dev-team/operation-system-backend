@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 import type { Env } from '../config/env';
 import { isUsableSecret } from '../common/integration-status';
+import { JobsModule } from '../jobs/jobs.module';
 import { ContentController } from './content.controller';
 import { ContentService } from './content.service';
 import {
@@ -17,6 +18,7 @@ import {
 } from './generation/text-generation.types';
 
 @Module({
+  imports: [JobsModule],
   controllers: [ContentController],
   providers: [
     ContentService,
