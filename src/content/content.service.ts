@@ -99,6 +99,7 @@ export class ContentService {
       topic: input.topic,
       audience: input.audience,
       format: input.format,
+      operationId: job.operationId ?? undefined,
       brand: brand
         ? {
             name: brand.name,
@@ -285,6 +286,12 @@ export class ContentService {
           },
         });
 
+        const operationId = createHash('sha256')
+          .update(
+            `${params.workspaceId}:${request.id}:${CONTENT_PROMPT_VERSION}`,
+          )
+          .digest('hex');
+
         const job = await tx.generationJob.create({
           data: {
             workspaceId: params.workspaceId,
@@ -292,6 +299,9 @@ export class ContentService {
             status: ContentJobStatus.requested,
             provider: this.provider.name,
             promptVersion: CONTENT_PROMPT_VERSION,
+            operationId,
+            retryCount: 0,
+            maxRetries: 3,
           },
         });
 

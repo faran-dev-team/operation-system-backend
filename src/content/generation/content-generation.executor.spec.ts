@@ -10,15 +10,19 @@ describe('DefaultContentGenerationExecutor', () => {
   function buildPrisma(overrides?: {
     claimCount?: number;
     existingStatus?: ContentJobStatus;
+    existingDraft?: { id: string } | null;
   }) {
     const claimCount = overrides?.claimCount ?? 1;
     const draft = { id: 'draft_1' };
     const updateMany = jest.fn().mockResolvedValue({ count: claimCount });
     const findFirst = jest.fn().mockResolvedValue({
+      id: 'job_1',
       status: overrides?.existingStatus ?? ContentJobStatus.succeeded,
       draft,
       errorCode: null,
       errorMessage: null,
+      retryCount: 0,
+      maxRetries: 3,
     });
 
     return {
@@ -33,6 +37,9 @@ describe('DefaultContentGenerationExecutor', () => {
           update: jest.fn().mockResolvedValue({}),
         },
         contentDraft: {
+          findFirst: jest
+            .fn()
+            .mockResolvedValue(overrides?.existingDraft ?? null),
           upsert: jest.fn().mockResolvedValue(draft),
         },
         $transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) =>
@@ -89,7 +96,30 @@ describe('DefaultContentGenerationExecutor', () => {
     });
   });
 
-  it('marks the job failed with a safe error and does not invent secrets', async () => {
+  it('reconciles without regenerating when a draft is already present', async () => {
+    const prisma = buildPrisma({
+      existingDraft: { id: 'pre_existing_draft_42' },
+    });
+    const generate = jest.fn();
+    const provider: TextGenerationProvider = {
+      name: 'stub',
+      generate,
+    };
+
+    const executor = new DefaultContentGenerationExecutor(
+      prisma as never,
+      provider,
+    );
+    const result = await executor.execute(input);
+
+    expect(generate).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      status: ContentJobStatus.succeeded,
+      draftId: 'pre_existing_draft_42',
+    });
+  });
+
+  it('marks the job for retry with a safe error when provider fails', async () => {
     const prisma = buildPrisma();
     const provider: TextGenerationProvider = {
       name: 'deepseek',
